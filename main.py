@@ -181,5 +181,15 @@ def create_task_for_project(project, name, start, end, status):
     insert_task_to_project(project['_id'], task['_id'])
 
 
+def list_unfinished_tasks(proj):
+    trav = traverse_task_in_project(proj['_id'])
+    arr = []
+    for task in trav:
+        if task['status']!='finished':
+            arr.append(task)
+    return arr
+
+
+
 init()
 print(traverse_task_in_project(projects.get({'_key': 'project_key6'})))
