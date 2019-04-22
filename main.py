@@ -1,11 +1,9 @@
 import random
-
 from arango import ArangoClient
-
-client = ArangoClient()
 
 
 def init():
+    client = ArangoClient()
     sys_db = client.db('_system', username='root', password='1488')
     sys_db.databases()
     if not sys_db.has_database('project'):
@@ -49,7 +47,6 @@ def init():
     global edge_w_o_p
     if project_user.has_edge_definition('Project-User'):
         edge_w_o_p = project_user.edge_collection('Project-User')
-
     else:
         edge_w_o_p = project_user.create_edge_definition(
             edge_collection='Project-User',
@@ -73,31 +70,41 @@ def init():
     else:
         edge_t_w_p = task_project.create_edge_definition(
             edge_collection='Task-Project',
-            from_vertex_collections=['User'],
+            from_vertex_collections=['Projects'],
             to_vertex_collections=['Tasks']
         )
+        generate_data()
 
-    generate()
 
-def generate():
+def generate_data():
     for i in range(100):
         add_user('name'+str(i), 'mail'+str(i)+'@mail.ma')
     for i in range(100):
         add_project('nameOfProject'+str(i), 'project_key'+str(i))
-    for i in range(100):
-        add_task('nameOfTask'+str(i), str(i//24)+'-00', str((i+1)//24)+'-00', 'in process')
+
     for i in range(1, 99):
         user = users.get({'_key': 'mail'+str(i)+'@mail.ma'})
         for x in range(random.randint(2, 4)):
             j = random.randint(1, 99)
             project = projects.get({'_key': 'project_key'+str(j)})
             insert_works_on_project(user['_id'], project['_id'])
+
+    for i in range(1, 99):
+        project = projects.get({'_key': 'project_key' + str(i)})
+        for x in range(random.randint(2, 4)):
+            create_task_for_project(project, project['name']+'_' + str(x), str(x*random.randint(10)//24)+'-00',
+                                    str(x*random.randint(10)//24)+'-00', 'in process')
+
     for i in range(1, 99):
         user = users.get({'_key': 'mail'+str(i)+'@mail.ma'})
-        for x in range(random.randint(2, 4)):
-            j = random.randint(1, 99)
-            project = tasks.get({'_key': 'nameOfTask'+str(j)})
-            insert_works_on_task(user['_id'], project['_id'])
+        projs = traverse_works_on_project(user['_id'])
+        for proj in projs:
+            tasks_proj = traverse_task_in_project(proj['_id'])
+            x = random.randint(0, len(tasks_proj))
+            for j in range(x):
+                s = random.randint(1, x)-1
+                insert_works_on_task(user['_id'], tasks_proj[s]['_id'])
+
 
 def add_user(name, email):
     user = db.insert_document('User', {'_key': email, 'name': name, 'email': email})
@@ -110,7 +117,8 @@ def add_project(name, project_key):
 
 
 def add_task(name, start, end, status):
-    task = db.insert_document('Tasks', {'_key': name.strip(' '), 'name': name, 'start': start, 'end': end, 'status': status})
+    task = db.insert_document('Tasks', {'_key': name.strip(' '), 'name': name, 'start': start,
+                                        'end': end, 'status': status})
     return task
 
 
@@ -128,6 +136,13 @@ def insert_works_on_task(user, task):
     })
 
 
+def insert_task_to_project(project, task):
+    edge_t_w_p.insert({
+        '_from': project,
+        '_to': task
+    })
+
+
 def traverse_works_on_tasks():
     trav = task_user.traverse(
         start_vertex='User/mail6@mail.ma',
@@ -139,9 +154,9 @@ def traverse_works_on_tasks():
     return trav['vertices'][1:]
 
 
-def traverse_works_on_project():
+def traverse_works_on_project(user):
     trav = project_user.traverse(
-        start_vertex='User/mail6@mail.ma',
+        start_vertex=user,
         direction='outbound',
         strategy='bfs',
         edge_uniqueness='global',
@@ -149,5 +164,22 @@ def traverse_works_on_project():
     )
     return trav['vertices'][1:]
 
+
+def traverse_task_in_project(proj):
+    trav = task_project.traverse(
+        start_vertex=proj,
+        direction='outbound',
+        strategy='bfs',
+        edge_uniqueness='global',
+        vertex_uniqueness='global',
+    )
+    return trav['vertices'][1:]
+
+
+def create_task_for_project(project, name, start, end, status):
+    task = add_task(name, start, end, status)
+    insert_task_to_project(project['_id'], task['_id'])
+
+
 init()
-print(traverse_works_on_tasks())
+print(traverse_task_in_project(projects.get({'_key': 'project_key6'})))
