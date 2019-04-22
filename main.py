@@ -1,5 +1,6 @@
 import random
 from arango import ArangoClient
+import datetime
 
 
 def init():
@@ -92,8 +93,11 @@ def generate_data():
     for i in range(1, 99):
         project = projects.get({'_key': 'project_key' + str(i)})
         for x in range(random.randint(2, 4)):
-            create_task_for_project(project, project['name'] + '_' + str(x), str(x * random.randint(10) // 24) + '-00',
-                                    str(x * random.randint(10) // 24) + '-00', 'in process')
+            create_task_for_project(project, project['name'] + '_' + str(x),
+                                    str(datetime.datetime(2019, 3, 24, x+1,
+                                                      random.choice([0, 30]), 0)),
+                                    str(datetime.datetime(2019, 4, 25,
+                                                      x + 1, random.choice([0, 30]), 0)), 'in process')
 
     for i in range(1, 99):
         user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
@@ -221,12 +225,28 @@ def list_tasks_finished_by(user):
     return arr
 
 
+def list_deadline_missed_user(user):
+    trav = list_tasks_on_user(user['_id'])
+    arr = []
+    for task in trav:
+        if task['status'] == 'deadline' or check_deadline_task(task):
+            arr.append(task)
+    return arr
+
+
 def change_status(task, status):
     task['status'] = status
     tasks.update(task)
 
 
+def check_deadline_task(task):
+    if datetime.datetime.now() >= datetime.datetime.strptime(task['end'], "%Y-%m-%dT%H:%M:%S"):
+        task['status'] = 'deadline'
+        db.update_document(task)
+        return True
+    return False
+
+
 init()
 # print(list_unfinished_tasks(projects.get({'_key': 'project_key6'})))
-change_status(list_tasks_on_user(users.get({'_key': 'mail56@mail.ma'}))[1], 'finished')
-print(list_tasks_finished_by(users.get({'_key': 'mail56@mail.ma'})))
+print(list_deadline_missed_user(users.get({'_key': 'mail30@mail.ma'})))
