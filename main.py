@@ -246,7 +246,11 @@ def check_deadline_task(task):
         return True
     return False
 
+def time_till_deadline(task):
+    return datetime.datetime.strptime(task['end'], "%Y-%m-%dT%H:%M:%S") - datetime.datetime.now()
+
 
 init()
 # print(list_unfinished_tasks(projects.get({'_key': 'project_key6'})))
 print(list_deadline_missed_user(users.get({'_key': 'mail30@mail.ma'})))
+print(time_till_deadline(list_deadline_missed_user(users.get({'_key': 'mail30@mail.ma'}))[0]))
