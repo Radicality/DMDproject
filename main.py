@@ -234,23 +234,32 @@ def list_deadline_missed_user(user):
     return arr
 
 
+def list_deadline_missed_project(project):
+    trav = list_tasks_of_project(project['_id'])
+    arr = []
+    for task in trav:
+        if task['status'] == 'deadline' or check_deadline_task(task):
+            arr.append(task)
+    return arr
+
 def change_status(task, status):
     task['status'] = status
     tasks.update(task)
 
 
 def check_deadline_task(task):
-    if datetime.datetime.now() >= datetime.datetime.strptime(task['end'], "%Y-%m-%dT%H:%M:%S"):
+    if datetime.datetime.now() >= datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S"):
         task['status'] = 'deadline'
         db.update_document(task)
         return True
     return False
 
+
 def time_till_deadline(task):
-    return datetime.datetime.strptime(task['end'], "%Y-%m-%dT%H:%M:%S") - datetime.datetime.now()
+    return datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S") - datetime.datetime.now()
 
 
 init()
 # print(list_unfinished_tasks(projects.get({'_key': 'project_key6'})))
 print(list_deadline_missed_user(users.get({'_key': 'mail30@mail.ma'})))
-print(time_till_deadline(list_deadline_missed_user(users.get({'_key': 'mail30@mail.ma'}))[0]))
+print(time_till_deadline(list_deadline_missed_project(projects.get({'_key': 'project_key7'})))[0])
