@@ -78,31 +78,31 @@ def init():
 
 def generate_data():
     for i in range(100):
-        add_user('name'+str(i), 'mail'+str(i)+'@mail.ma')
+        add_user('name' + str(i), 'mail' + str(i) + '@mail.ma')
     for i in range(100):
-        add_project('nameOfProject'+str(i), 'project_key'+str(i))
+        add_project('nameOfProject' + str(i), 'project_key' + str(i))
 
     for i in range(1, 99):
-        user = users.get({'_key': 'mail'+str(i)+'@mail.ma'})
+        user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
         for x in range(random.randint(2, 4)):
             j = random.randint(1, 99)
-            project = projects.get({'_key': 'project_key'+str(j)})
+            project = projects.get({'_key': 'project_key' + str(j)})
             insert_works_on_project(user['_id'], project['_id'])
 
     for i in range(1, 99):
         project = projects.get({'_key': 'project_key' + str(i)})
         for x in range(random.randint(2, 4)):
-            create_task_for_project(project, project['name']+'_' + str(x), str(x*random.randint(10)//24)+'-00',
-                                    str(x*random.randint(10)//24)+'-00', 'in process')
+            create_task_for_project(project, project['name'] + '_' + str(x), str(x * random.randint(10) // 24) + '-00',
+                                    str(x * random.randint(10) // 24) + '-00', 'in process')
 
     for i in range(1, 99):
-        user = users.get({'_key': 'mail'+str(i)+'@mail.ma'})
-        projs = traverse_works_on_project(user['_id'])
+        user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
+        projs = list_projects_on_user(user['_id'])
         for proj in projs:
-            tasks_proj = traverse_task_in_project(proj['_id'])
+            tasks_proj = list_tasks_of_project(proj['_id'])
             x = random.randint(0, len(tasks_proj))
             for j in range(x):
-                s = random.randint(1, x)-1
+                s = random.randint(1, x) - 1
                 insert_works_on_task(user['_id'], tasks_proj[s]['_id'])
 
 
@@ -143,9 +143,20 @@ def insert_task_to_project(project, task):
     })
 
 
-def traverse_works_on_tasks():
+def list_users_on_task(task):
     trav = task_user.traverse(
-        start_vertex='User/mail6@mail.ma',
+        start_vertex=task,
+        direction='inbound',
+        strategy='bfs',
+        edge_uniqueness='global',
+        vertex_uniqueness='global',
+    )
+    return trav['vertices'][1:]
+
+
+def list_tasks_on_user(user):
+    trav = task_user.traverse(
+        start_vertex=user,
         direction='outbound',
         strategy='bfs',
         edge_uniqueness='global',
@@ -154,7 +165,7 @@ def traverse_works_on_tasks():
     return trav['vertices'][1:]
 
 
-def traverse_works_on_project(user):
+def list_projects_on_user(user):
     trav = project_user.traverse(
         start_vertex=user,
         direction='outbound',
@@ -165,7 +176,18 @@ def traverse_works_on_project(user):
     return trav['vertices'][1:]
 
 
-def traverse_task_in_project(proj):
+def list_users_on_project(project):
+    trav = project_user.traverse(
+        start_vertex=project,
+        direction='inbound',
+        strategy='bfs',
+        edge_uniqueness='global',
+        vertex_uniqueness='global',
+    )
+    return trav['vertices'][1:]
+
+
+def list_tasks_of_project(proj):
     trav = task_project.traverse(
         start_vertex=proj,
         direction='outbound',
@@ -182,14 +204,29 @@ def create_task_for_project(project, name, start, end, status):
 
 
 def list_unfinished_tasks(proj):
-    trav = traverse_task_in_project(proj['_id'])
+    trav = list_tasks_of_project(proj['_id'])
     arr = []
     for task in trav:
-        if task['status']!='finished':
+        if task['status'] != 'finished':
             arr.append(task)
     return arr
 
 
+def list_tasks_finished_by(user):
+    trav = list_tasks_on_user(user['_id'])
+    arr = []
+    for task in trav:
+        if task['status'] == 'finished':
+            arr.append(task)
+    return arr
+
+
+def change_status(task, status):
+    task['status'] = status
+    tasks.update(task)
+
 
 init()
-print(traverse_task_in_project(projects.get({'_key': 'project_key6'})))
+# print(list_unfinished_tasks(projects.get({'_key': 'project_key6'})))
+change_status(list_tasks_on_user(users.get({'_key': 'mail56@mail.ma'}))[1], 'finished')
+print(list_tasks_finished_by(users.get({'_key': 'mail56@mail.ma'})))
