@@ -101,7 +101,7 @@ def generate_data():
         for i in range(1, 1000):
             user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
             for x in range(random.randint(2, 4)):
-                j = random.randint(1, 1000)
+                j = random.randint(1, 999)
                 project = projects.get({'_key': 'project_key' + str(j)})
                 insert_works_on_project(user, project)
 
