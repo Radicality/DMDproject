@@ -255,7 +255,7 @@ def list_deadline_missed_project(project):
     :param project: full JSON representation; not just id
     :return: list of JSON representations of tasks
     """
-    trav = list_tasks_of_project(project['_id'])
+    trav = list_tasks_of_project(project)
     arr = []
     for task in trav:
         if task['status'] == 'deadline' or check_deadline_task(task):
@@ -266,14 +266,16 @@ def list_deadline_missed_project(project):
 def find_deadline_user_missed_on_proj(project):
     """
     Finds users that missed deadline for their tasks.
-    :param project:
-    :return:
+    :param project: JSON representing project
+    :return: list of users
     """
     missed_tasks = list_deadline_missed_project(project)
     arr = []
     for task in missed_tasks:
         trav = list_users_on_task(task)
-        arr = arr - trav + trav
+        for tra in trav:
+            if not tra in arr:
+                arr.append(tra)
     return arr
 
 
@@ -316,7 +318,9 @@ def time_interval(task):
            datetime.datetime.strptime(task['start'], "%Y-%m-%d %H:%M:%S")
 
 
+
+
 init()
 user = users.get({'_key': 'mail45@mail.ma'})
-proj = projects.get({'_key': 'project_key52'})
-fire_user_from_project(user, proj)
+proj = projects.get({'_key': 'project_key48'})
+print(find_deadline_user_missed_on_proj(proj))
