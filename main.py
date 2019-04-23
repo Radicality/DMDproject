@@ -28,49 +28,49 @@ def init():
     tasks = db.collection('Tasks')
 
     global project_user
-    if db.has_graph('Project-User'):
-        project_user = db.graph('Project-User')
+    if db.has_graph('Project_User'):
+        project_user = db.graph('Project_User')
     else:
-        project_user = db.create_graph('Project-User')
+        project_user = db.create_graph('Project_User')
 
     global task_user
-    if db.has_graph('Task-User'):
-        task_user = db.graph('Task-User')
+    if db.has_graph('Task_User'):
+        task_user = db.graph('Task_User')
     else:
-        task_user = db.create_graph('Task-User')
+        task_user = db.create_graph('Task_User')
 
     global task_project
-    if db.has_graph('Task-Project'):
-        task_project = db.graph('Task-Project')
+    if db.has_graph('Task_Project'):
+        task_project = db.graph('Task_Project')
     else:
-        task_project = db.create_graph('Task-Project')
+        task_project = db.create_graph('Task_Project')
 
     global edge_w_o_p
-    if project_user.has_edge_definition('Project-User'):
-        edge_w_o_p = project_user.edge_collection('Project-User')
+    if project_user.has_edge_definition('Project_User'):
+        edge_w_o_p = project_user.edge_collection('Project_User')
     else:
         edge_w_o_p = project_user.create_edge_definition(
-            edge_collection='Project-User',
+            edge_collection='Project_User',
             from_vertex_collections=['User'],
             to_vertex_collections=['Projects']
         )
 
     global edge_w_o_t
-    if task_user.has_edge_definition('Task-User'):
-        edge_w_o_t = task_user.edge_collection('Task-User')
+    if task_user.has_edge_definition('Task_User'):
+        edge_w_o_t = task_user.edge_collection('Task_User')
     else:
         edge_w_o_t = task_user.create_edge_definition(
-            edge_collection='Task-User',
+            edge_collection='Task_User',
             from_vertex_collections=['User'],
             to_vertex_collections=['Tasks']
         )
 
     global edge_t_w_p
-    if task_project.has_edge_definition('Task-Project'):
+    if task_project.has_edge_definition('Task_Project'):
         edge_t_w_p = task_project.edge_collection('Task-Project')
     else:
         edge_t_w_p = task_project.create_edge_definition(
-            edge_collection='Task-Project',
+            edge_collection='Task_Project',
             from_vertex_collections=['Projects'],
             to_vertex_collections=['Tasks']
         )
@@ -94,10 +94,10 @@ def generate_data():
         project = projects.get({'_key': 'project_key' + str(i)})
         for x in range(random.randint(2, 4)):
             create_task_for_project(project, project['name'] + '_' + str(x),
-                                    str(datetime.datetime(2019, 3, 24, x+1,
-                                                      random.choice([0, 30]), 0)),
+                                    str(datetime.datetime(2019, 3, 24, x + 1,
+                                                          random.choice([0, 30]), 0)),
                                     str(datetime.datetime(2019, 4, 25,
-                                                      x + 1, random.choice([0, 30]), 0)), 'in process')
+                                                          x + 1, random.choice([0, 30]), 0)), 'in process')
 
     for i in range(1, 99):
         user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
@@ -149,7 +149,7 @@ def insert_task_to_project(project, task):
 
 def list_users_on_task(task):
     trav = task_user.traverse(
-        start_vertex=task,
+        start_vertex=task['_id'],
         direction='inbound',
         strategy='bfs',
         edge_uniqueness='global',
@@ -160,7 +160,7 @@ def list_users_on_task(task):
 
 def list_tasks_on_user(user):
     trav = task_user.traverse(
-        start_vertex=user,
+        start_vertex=user['_id'],
         direction='outbound',
         strategy='bfs',
         edge_uniqueness='global',
@@ -171,7 +171,7 @@ def list_tasks_on_user(user):
 
 def list_projects_on_user(user):
     trav = project_user.traverse(
-        start_vertex=user,
+        start_vertex=user['_id'],
         direction='outbound',
         strategy='bfs',
         edge_uniqueness='global',
@@ -182,7 +182,7 @@ def list_projects_on_user(user):
 
 def list_users_on_project(project):
     trav = project_user.traverse(
-        start_vertex=project,
+        start_vertex=project['_id'],
         direction='inbound',
         strategy='bfs',
         edge_uniqueness='global',
@@ -193,7 +193,7 @@ def list_users_on_project(project):
 
 def list_tasks_of_project(proj):
     trav = task_project.traverse(
-        start_vertex=proj,
+        start_vertex=proj['_id'],
         direction='outbound',
         strategy='bfs',
         edge_uniqueness='global',
@@ -208,6 +208,11 @@ def create_task_for_project(project, name, start, end, status):
 
 
 def list_unfinished_tasks(proj):
+    """
+        Lists tasks that are not finished in project.
+        :param proj: full JSON representation; not just id
+        :return: list of JSON representations of tasks
+    """
     trav = list_tasks_of_project(proj['_id'])
     arr = []
     for task in trav:
@@ -217,6 +222,11 @@ def list_unfinished_tasks(proj):
 
 
 def list_tasks_finished_by(user):
+    """
+        Lists tasks taht user finished
+        :param user: full JSON representation; not just id
+        :return: list of JSON representations of tasks
+    """
     trav = list_tasks_on_user(user['_id'])
     arr = []
     for task in trav:
@@ -226,6 +236,11 @@ def list_tasks_finished_by(user):
 
 
 def list_deadline_missed_user(user):
+    """
+    Lists users tasks that went over deadline
+    :param user: full JSON representation; not just id
+    :return: list of JSON representations of tasks
+    """
     trav = list_tasks_on_user(user['_id'])
     arr = []
     for task in trav:
@@ -235,6 +250,11 @@ def list_deadline_missed_user(user):
 
 
 def list_deadline_missed_project(project):
+    """
+    Lists task for project where task went over deadline
+    :param project: full JSON representation; not just id
+    :return: list of JSON representations of tasks
+    """
     trav = list_tasks_of_project(project['_id'])
     arr = []
     for task in trav:
@@ -242,9 +262,41 @@ def list_deadline_missed_project(project):
             arr.append(task)
     return arr
 
+
+def find_deadline_user_missed_on_proj(project):
+    """
+    Finds users that missed deadline for their tasks.
+    :param project:
+    :return:
+    """
+    missed_tasks = list_deadline_missed_project(project)
+    arr = []
+    for task in missed_tasks:
+        trav = list_users_on_task(task)
+        arr = arr - trav + trav
+    return arr
+
+
 def change_status(task, status):
     task['status'] = status
     tasks.update(task)
+
+
+def fire_user_from_project(user, project):
+    u_tasks = list_tasks_on_user(user)
+    p_tasks = list_tasks_of_project(project)
+    taskss = []
+    for i in u_tasks:
+        if i in p_tasks:
+            taskss.append(i)
+    for task in taskss:
+        remove_user_from_task(user, task)
+
+
+def remove_user_from_task(user, task):
+    print(user, task)
+    db.aql.execute('FOR edge in Task_User Filter edge._from == "' + user['_id']
+                   + '" and edge._to =="' + task['_id'] + '" remove edge in Task_User')
 
 
 def check_deadline_task(task):
@@ -259,7 +311,12 @@ def time_till_deadline(task):
     return datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S") - datetime.datetime.now()
 
 
+def time_interval(task):
+    return datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S") - \
+           datetime.datetime.strptime(task['start'], "%Y-%m-%d %H:%M:%S")
+
+
 init()
-# print(list_unfinished_tasks(projects.get({'_key': 'project_key6'})))
-print(list_deadline_missed_user(users.get({'_key': 'mail30@mail.ma'})))
-print(time_till_deadline(list_deadline_missed_project(projects.get({'_key': 'project_key7'})))[0])
+user = users.get({'_key': 'mail45@mail.ma'})
+proj = projects.get({'_key': 'project_key52'})
+fire_user_from_project(user, proj)
