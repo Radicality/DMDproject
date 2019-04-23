@@ -148,6 +148,11 @@ def insert_task_to_project(project, task):
 
 
 def list_users_on_task(task):
+    """
+    Lists users that work on task
+    :param task: JSON representation of task
+    :return: list of users
+    """
     trav = task_user.traverse(
         start_vertex=task['_id'],
         direction='inbound',
@@ -159,6 +164,11 @@ def list_users_on_task(task):
 
 
 def list_tasks_on_user(user):
+    """
+    Lists tasks that user works on
+    :param user: JSON representation of user
+    :return: list of tasks
+    """
     trav = task_user.traverse(
         start_vertex=user['_id'],
         direction='outbound',
@@ -170,6 +180,11 @@ def list_tasks_on_user(user):
 
 
 def list_projects_on_user(user):
+    """
+    Lists projects that user works on
+    :param user: JSON representation of user
+    :return: list of projects
+    """
     trav = project_user.traverse(
         start_vertex=user['_id'],
         direction='outbound',
@@ -181,6 +196,11 @@ def list_projects_on_user(user):
 
 
 def list_users_on_project(project):
+    """
+    Lists users that work on project
+    :param project: JSON representation of project
+    :return: list of users
+    """
     trav = project_user.traverse(
         start_vertex=project['_id'],
         direction='inbound',
@@ -209,9 +229,9 @@ def create_task_for_project(project, name, start, end, status):
 
 def list_unfinished_tasks(proj):
     """
-        Lists tasks that are not finished in project.
-        :param proj: full JSON representation; not just id
-        :return: list of JSON representations of tasks
+    Lists tasks that are not finished in project.
+    :param proj: full JSON representation; not just id
+    :return: list of JSON representations of tasks
     """
     trav = list_tasks_of_project(proj)
     arr = []
@@ -280,11 +300,24 @@ def find_deadline_user_missed_on_proj(project):
 
 
 def change_status(task, status):
+    """
+    Changes status parameter for task
+    :param task: JSON representation of task
+    :param status: str
+    :return: nothing
+    """
     task['status'] = status
     tasks.update(task)
 
 
 def find_close_to_deadline(project, time):
+    """
+    Finds tasks for project that have 'time' left till deadline
+    :param
+    project: JSON representation of project
+    time: timedelta
+    :return: list of tasks
+    """
     tasks = list_tasks_of_project(project)
     arr = []
     for task in tasks:
@@ -294,6 +327,13 @@ def find_close_to_deadline(project, time):
 
 
 def remove_user_from_project(user, project):
+    """
+    Removes all connection between user and project (and tasks for project as well)
+    :param
+    user: JSON representation of user
+    project: JSON representation of project
+    :return: nothing
+    """
     u_tasks = list_tasks_on_user(user)
     p_tasks = list_tasks_of_project(project)
     taskss = []
@@ -305,11 +345,23 @@ def remove_user_from_project(user, project):
 
 
 def remove_user_from_task(user, task):
+    """
+    Removes connection between user and task
+    :param
+    user: JSON representation of user
+    task: JSON representation of task
+    :return: nothing
+    """
     db.aql.execute('FOR edge in Task_User Filter edge._from == "' + user['_id']
                    + '" and edge._to =="' + task['_id'] + '" remove edge in Task_User')
 
 
 def check_deadline_task(task):
+    """
+    Finds task for what deadline was reached
+    :param task: JSON representation of task
+    :return: list of tasks
+    """
     if datetime.datetime.now() >= datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S"):
         task['status'] = 'deadline'
         db.update_document(task)
@@ -318,10 +370,20 @@ def check_deadline_task(task):
 
 
 def time_till_deadline(task):
+    """
+    Returns time for a task until deadline
+    :param task: JSON representation of task
+    :return: timedelta
+    """
     return datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S") - datetime.datetime.now()
 
 
 def time_interval(task):
+    """
+    Returns difference between start and end for a task
+    :param task: JSON representation of task
+    :return: timedelta
+    """
     return datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S") - \
            datetime.datetime.strptime(task['start'], "%Y-%m-%d %H:%M:%S")
 
