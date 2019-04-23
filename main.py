@@ -3,7 +3,7 @@ from arango import ArangoClient
 import datetime
 
 
-def init():
+def init_db():
     client = ArangoClient()
     sys_db = client.db('_system', username='root', password='1488')
     sys_db.databases()
@@ -12,6 +12,9 @@ def init():
 
     global db
     db = client.db('project', username='root', password='1488')
+
+
+def init_collections():
     if not db.has_collection('User'):
         db.create_collection(name='User')
     global users
@@ -27,6 +30,8 @@ def init():
     global tasks
     tasks = db.collection('Tasks')
 
+
+def init_graphs():
     global project_user
     if db.has_graph('Project_User'):
         project_user = db.graph('Project_User')
@@ -45,6 +50,8 @@ def init():
     else:
         task_project = db.create_graph('Task_Project')
 
+
+def init_edges():
     global edge_w_o_p
     if project_user.has_edge_definition('Project_User'):
         edge_w_o_p = project_user.edge_collection('Project_User')
@@ -74,40 +81,48 @@ def init():
             from_vertex_collections=['Projects'],
             to_vertex_collections=['Tasks']
         )
-        generate_data()
+
+
+def init():
+    init_db()
+    init_collections()
+    init_graphs()
+    init_edges()
+    generate_data()
 
 
 def generate_data():
-    for i in range(100):
-        add_user('name' + str(i), 'mail' + str(i) + '@mail.ma')
-    for i in range(100):
-        add_project('nameOfProject' + str(i), 'project_key' + str(i))
+    if users.count() == 0:
+        for i in range(1000):
+            add_user('name' + str(i), 'mail' + str(i) + '@mail.ma')
+        for i in range(1000):
+            add_project('nameOfProject' + str(i), 'project_key' + str(i))
 
-    for i in range(1, 99):
-        user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
-        for x in range(random.randint(2, 4)):
-            j = random.randint(1, 99)
-            project = projects.get({'_key': 'project_key' + str(j)})
-            insert_works_on_project(user, project)
+        for i in range(1, 1000):
+            user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
+            for x in range(random.randint(2, 4)):
+                j = random.randint(1, 1000)
+                project = projects.get({'_key': 'project_key' + str(j)})
+                insert_works_on_project(user, project)
 
-    for i in range(1, 99):
-        project = projects.get({'_key': 'project_key' + str(i)})
-        for x in range(random.randint(2, 4)):
-            create_task_for_project(project, project['name'] + '_' + str(x),
-                                    str(datetime.datetime(2019, 3, 24, x + 1,
-                                                          random.choice([0, 30]), 0)),
-                                    str(datetime.datetime(2019, 4, 25,
-                                                          x + 1, random.choice([0, 30]), 0)), 'in process')
+        for i in range(1, 1000):
+            project = projects.get({'_key': 'project_key' + str(i)})
+            for x in range(random.randint(2, 4)):
+                create_task_for_project(project, project['name'] + '_' + str(x),
+                                        str(datetime.datetime(2019, 3, 24, x + 1,
+                                                              random.choice([0, 30]), 0)),
+                                        str(datetime.datetime(2019, 4, 25,
+                                                              x + 1, random.choice([0, 30]), 0)), 'in process')
 
-    for i in range(1, 99):
-        user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
-        projs = list_projects_on_user(user)
-        for proj in projs:
-            tasks_proj = list_tasks_of_project(proj)
-            x = random.randint(0, len(tasks_proj))
-            for j in range(x):
-                s = random.randint(1, x) - 1
-                insert_works_on_task(user, tasks_proj[s])
+        for i in range(1, 1000):
+            user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
+            projs = list_projects_on_user(user)
+            for proj in projs:
+                tasks_proj = list_tasks_of_project(proj)
+                x = random.randint(0, len(tasks_proj))
+                for j in range(x):
+                    s = random.randint(1, x) - 1
+                    insert_works_on_task(user, tasks_proj[s])
 
 
 def add_user(name, email):
