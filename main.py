@@ -284,7 +284,16 @@ def change_status(task, status):
     tasks.update(task)
 
 
-def fire_user_from_project(user, project):
+def find_close_to_deadline(project, time):
+    tasks = list_tasks_of_project(project)
+    arr = []
+    for task in tasks:
+        if time_till_deadline(task) < time:
+            arr.append(task)
+    return arr
+
+
+def remove_user_from_project(user, project):
     u_tasks = list_tasks_on_user(user)
     p_tasks = list_tasks_of_project(project)
     taskss = []
@@ -323,4 +332,4 @@ def time_interval(task):
 init()
 user = users.get({'_key': 'mail45@mail.ma'})
 proj = projects.get({'_key': 'project_key48'})
-print(find_deadline_user_missed_on_proj(proj))
+print(find_close_to_deadline(proj, datetime.timedelta(days=1)))
