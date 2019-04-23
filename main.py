@@ -88,7 +88,7 @@ def generate_data():
         for x in range(random.randint(2, 4)):
             j = random.randint(1, 99)
             project = projects.get({'_key': 'project_key' + str(j)})
-            insert_works_on_project(user['_id'], project['_id'])
+            insert_works_on_project(user, project)
 
     for i in range(1, 99):
         project = projects.get({'_key': 'project_key' + str(i)})
@@ -101,13 +101,13 @@ def generate_data():
 
     for i in range(1, 99):
         user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
-        projs = list_projects_on_user(user['_id'])
+        projs = list_projects_on_user(user)
         for proj in projs:
-            tasks_proj = list_tasks_of_project(proj['_id'])
+            tasks_proj = list_tasks_of_project(proj)
             x = random.randint(0, len(tasks_proj))
             for j in range(x):
                 s = random.randint(1, x) - 1
-                insert_works_on_task(user['_id'], tasks_proj[s]['_id'])
+                insert_works_on_task(user, tasks_proj[s])
 
 
 def add_user(name, email):
@@ -128,22 +128,22 @@ def add_task(name, start, end, status):
 
 def insert_works_on_project(user, project):
     edge_w_o_p.insert({
-        '_from': user,
-        '_to': project
+        '_from': user['_id'],
+        '_to': project['_id']
     })
 
 
 def insert_works_on_task(user, task):
     edge_w_o_t.insert({
-        '_from': user,
-        '_to': task
+        '_from': user['_id'],
+        '_to': task['_id']
     })
 
 
 def insert_task_to_project(project, task):
     edge_t_w_p.insert({
-        '_from': project,
-        '_to': task
+        '_from': project['_id'],
+        '_to': task['_id']
     })
 
 
@@ -325,8 +325,6 @@ def time_till_deadline(task):
 def time_interval(task):
     return datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S") - \
            datetime.datetime.strptime(task['start'], "%Y-%m-%d %H:%M:%S")
-
-
 
 
 init()
