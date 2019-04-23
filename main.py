@@ -204,7 +204,7 @@ def list_tasks_of_project(proj):
 
 def create_task_for_project(project, name, start, end, status):
     task = add_task(name, start, end, status)
-    insert_task_to_project(project['_id'], task['_id'])
+    insert_task_to_project(project, task)
 
 
 def list_unfinished_tasks(proj):
@@ -213,7 +213,7 @@ def list_unfinished_tasks(proj):
         :param proj: full JSON representation; not just id
         :return: list of JSON representations of tasks
     """
-    trav = list_tasks_of_project(proj['_id'])
+    trav = list_tasks_of_project(proj)
     arr = []
     for task in trav:
         if task['status'] != 'finished':
@@ -227,7 +227,7 @@ def list_tasks_finished_by(user):
         :param user: full JSON representation; not just id
         :return: list of JSON representations of tasks
     """
-    trav = list_tasks_on_user(user['_id'])
+    trav = list_tasks_on_user(user)
     arr = []
     for task in trav:
         if task['status'] == 'finished':
@@ -241,7 +241,7 @@ def list_deadline_missed_user(user):
     :param user: full JSON representation; not just id
     :return: list of JSON representations of tasks
     """
-    trav = list_tasks_on_user(user['_id'])
+    trav = list_tasks_on_user(user)
     arr = []
     for task in trav:
         if task['status'] == 'deadline' or check_deadline_task(task):
@@ -305,7 +305,6 @@ def remove_user_from_project(user, project):
 
 
 def remove_user_from_task(user, task):
-    print(user, task)
     db.aql.execute('FOR edge in Task_User Filter edge._from == "' + user['_id']
                    + '" and edge._to =="' + task['_id'] + '" remove edge in Task_User')
 
