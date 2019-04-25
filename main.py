@@ -1,9 +1,8 @@
 import random
 from arango import ArangoClient
 import datetime
-import plotly.plotly as py
-import plotly.figure_factory as ff
 import time
+
 
 def init_db():
     client = ArangoClient()
@@ -102,16 +101,16 @@ def generate_data():
         for i in range(1, 1000):
             project = projects.get({'_key': 'project_key' + str(i)})
             for x in range(random.randint(2, 4)):
-                day = i%29
-                if day==0:
-                    day+=1
+                day = i % 29
+                if day == 0:
+                    day += 1
                 month_start = random.randint(3, 4)
                 month_end = random.randint(4, 5)
                 create_task_for_project(project, project['name'] + '_' + str(x),
                                         str(datetime.datetime(2019, month_start, day, x + 1,
                                                               random.choice([0, 30]), 0)),
                                         str(datetime.datetime(2019, month_end, day,
-                                                              x + 1, random.choice([0, 30]), 0)), 'in process')
+                                                              x + 1, random.choice([0, 30]), 0)), random.choice['in process', 'finished'])
 
         for i in range(1, 1000):
             user = users.get({'_key': 'mail' + str(i) + '@mail.ma'})
@@ -124,12 +123,28 @@ def generate_data():
                     insert_works_on_task(user, tasks_proj[s])
 
 
+def geospatial_search_set_up():
+    global geo
+    if not db.has_collection('Geo'):
+        geo = db.create_collection(name='Geo')
+        for task in tasks:
+            end = datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S")
+            start = datetime.datetime.strptime(task['start'], "%Y-%m-%d %H:%M:%S")
+            end = time.mktime(end.timetuple()) / 100000000
+            start = time.mktime(start.timetuple()) / 100000000
+            db.insert_document('Geo', {'name': task['_key'], 'coordinates': [start, end]})
+        geo.add_geo_index(fields=['coordinates'])
+    else:
+        geo = db.collection('Geo')
+
+
 def init():
     init_db()
     init_collections()
     init_graphs()
     init_edges()
     generate_data()
+    geospatial_search_set_up()
 
 
 def add_user(name, email):
@@ -409,12 +424,13 @@ def time_interval(task):
     return datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S") - \
            datetime.datetime.strptime(task['start'], "%Y-%m-%d %H:%M:%S")
 
-def change_time_of_task(task,start=0, end=0):
-    if start == 0:
-        task['end']=end
+
+def change_time_of_task(task, start=None, end=None):
+    if start is None:
+        task['end'] = end
         tasks.update(task)
         return
-    if end == 0:
+    if end is None:
         task['start'] = start
         tasks.update(task)
         return
@@ -422,22 +438,22 @@ def change_time_of_task(task,start=0, end=0):
     task['start'] = start
     tasks.update(task)
 
-def geospatial_search_set_up():
-    global geo
-    if not db.has_collection('Geo'):
-        geo = db.create_collection(name='Geo')
-        for task in tasks:
-            end = datetime.datetime.strptime(task['end'], "%Y-%m-%d %H:%M:%S")
-            start = datetime.datetime.strptime(task['start'], "%Y-%m-%d %H:%M:%S")
-            end = time.mktime(end.timetuple())/100000000
-            start = time.mktime(start.timetuple())/100000000
-            db.insert_document('Geo', {'name': task['_key'], 'coordinates': [start, end]})
-        geo.add_geo_index(fields=['coordinates'])
-    else:
-        geo = db.collection('Geo')
 
+def find_near_now():
+    return find_near_time(datetime.datetime.now())
 
-
+def find_near_time(tim):
+    sear = None
+    if isinstance(tim, datetime.datetime):
+        dat = time.mktime(tim.timetuple()) / 100000000
+        sear = geo.find_near(dat, dat, limit=20)
+    elif tim is str:
+        dat = datetime.datetime.strptime(tim, "%Y-%m-%d %H:%M:%S").mktime(tim.timetuple()) / 100000000
+        sear = geo.find_near(dat, dat, limit=20)
+    arr = []
+    for task in sear:
+        arr.append(task)
+    return arr
 init()
 # user = users.get({'_key': 'mail45@mail.ma'})
 # proj = projects.get({'_key': 'project_key48'})
