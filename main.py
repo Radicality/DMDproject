@@ -442,6 +442,7 @@ def change_time_of_task(task, start=None, end=None):
 def find_near_now():
     return find_near_time(datetime.datetime.now())
 
+
 def find_near_time(tim):
     sear = None
     if isinstance(tim, datetime.datetime):
@@ -454,6 +455,36 @@ def find_near_time(tim):
     for task in sear:
         arr.append(task)
     return arr
+
+
+def print_find_near_now():
+    arr = find_near_now()
+    for i in arr:
+        print(i['name'], i['coordinates'])
+    return arr
+
+
+def print_list_of_tasks(taskss):
+    for i in taskss:
+        print(i['_id'], i['name'], i['start'], i['end'])
+
+
+def print_list_of_users(userss):
+    for i in userss:
+        print(i['_id'], i['name'])
+
+
+def print_list_of_projects(projectss):
+    for i in projectss:
+        print(i['_id'], i['name'])
+
+
+def print_list_unfinished_tasks(project):
+    arr = list_unfinished_tasks(project)
+    print_list_of_tasks(arr)
+    return arr
+
+
 init()
 # user = users.get({'_key': 'mail45@mail.ma'})
 # proj = projects.get({'_key': 'project_key48'})
